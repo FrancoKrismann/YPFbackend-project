@@ -6,10 +6,8 @@ const pozosDelete = require('./pozoDelete.js');
 const router = express.Router();
 
 router.use("/pozos",pozosGet);
-// router.use("/pozos",pozosPost);
-// router.use("/pozos",pozosPut);
-// router.use("/pozos",pozosDelete);
-
-
+router.use("/pozos",pozosPost);
+router.use("/pozos",pozosPut);
+router.use("/pozos",pozosDelete);
 
 module.exports = router;
