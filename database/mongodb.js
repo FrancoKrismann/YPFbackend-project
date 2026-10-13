@@ -1,27 +1,34 @@
-const { MongoClient } = require('mongodb');
-const DB_USERNAME = process.env.DB_USER;
-const DBPASSWORD = process.env.DB_PASSWORD;
+const mongoose = require('mongoose');
 
-
-const client = new MongoClient(`mongodb+srv://${DB_USERNAME}:${DBPASSWORD}@ypftest.hu7stc7.mongodb.net/?appName=YPFtest`);
-
-async function connectDB() {
+const connectDB = async () => {
   try {
-    await client.connect();
-    console.log("You successfully connected to MongoDB!");
-    return client;
-  } catch (err) {
-    console.dir(err);
+    const uri = process.env.MONGO_URI || `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@ypftest.hu7stc7.mongodb.net/mi_base?retryWrites=true&w=majority&appName=YPFtest`;
+    
+    // Conectamos usando Mongoose
+    await mongoose.connect(uri, {
+      family: 4,
+      tlsAllowInvalidCertificates: true
+    });
+
+    console.log("Conectado con Mongoose exitosamente a MongoDB Atlas!");
+    return mongoose.connection;
+  } catch (error) {
+    console.error("Error al conectar a MongoDB:", error.message);
+    throw error;
   }
-}
+};
 
-// Call this only when your application terminates
-async function disconnectDB() {
-  await client.close();
-}
+const disconnectDB = async () => {
+  try {
+    await mongoose.disconnect();
+    console.log("Desconectado de MongoDB");
+  } catch (error) {
+    console.error("Error al desconectar:", error.message);
+  }
+};
+
 function getDB() {
-  return client.db('mi_base'); // el nombre de tu base
+  return mongoose.connection.db;
 }
-
 
 module.exports = { connectDB, disconnectDB, getDB };
