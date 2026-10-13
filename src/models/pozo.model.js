@@ -14,12 +14,17 @@ const pozoSchema = new mongoose.Schema(
     },
     yacimiento: {
       type: String,
-      required: [true, 'El yacimiento es obligatorio'],
+      default: 'Sierra Chata',
       trim: true, 
     },
     estado: {
       type: String,
-      enum: ['activo', 'inactivo', 'En Mantenimiento', 'Cerrado'],
+      enum: {
+        values: ['activo', 'inactivo', 'mantenimiento', 'cerrado'],
+        message: '{VALUE} no es un estado válido. Debe ser: activo, inactivo, mantenimiento o cerrado'
+      },
+      lowercase: true,
+      default: 'activo',
     },
   },
   {
