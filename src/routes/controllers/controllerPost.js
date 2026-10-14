@@ -37,6 +37,7 @@ const crearPozo = asyncHandler(async (req, res) => {
     produccionDiariaBarriles: produccionDiariaBarriles ? Number(produccionDiariaBarriles) : 0
   });
 
+
   // Guardamos en la base de datos de MongoDB
   const pozoGuardado = await nuevoPozo.save();
 
