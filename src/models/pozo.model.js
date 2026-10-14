@@ -33,4 +33,4 @@ const pozoSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('Pozo', pozoSchema);
+module.exports = mongoose.model('Pozo', pozoSchema, 'pozos');

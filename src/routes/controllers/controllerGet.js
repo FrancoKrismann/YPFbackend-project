@@ -1,22 +1,51 @@
-const { pozos } = require("../../../database/data")
+const asyncHandler = require('../../utils/asyncHandler');
+const Pozo = require('../../models/pozo.model');
 
-const obtenerPozos = (req, res) => {
+// Obtener todos los pozos (con filtro opcional por estado en query)
+const obtenerPozos = asyncHandler(async (req, res) => {
   const { estado } = req.query;
-  const resultado = estado ? pozos.filter(p => p.estado === estado) : pozos;
-  res.json(resultado);
-};
+  const filtro = {};
 
-const obtenerPorId = (req, res) => {
-  const pozo = pozos.find(p => p.id === Number(req.params.id));
-  if (!pozo) return res.status(404).json({ error: 'Pozo no encontrado' });
-  res.json(pozo);
-};
+  if (estado) {
+    // Insensible a mayúsculas/minúsculas
+    filtro.estado = { $regex: new RegExp(`^${estado}$`, 'i') };
+  }
 
-const obtenerPorYacimiento = (req, res) => {
-  const resultado = pozos.filter(
-    p => p.yacimiento.toLowerCase() === req.params.yacimiento.toLowerCase()
-  );
-  res.json(resultado);
-};
+  const resultado = await Pozo.find(filtro);
+  res.status(200).json(resultado);
+});
+
+// Obtener un pozo por ID numérico o por _id
+const obtenerPorId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  let pozo = null;
+
+  if (!isNaN(id)) {
+    pozo = await Pozo.findOne({ id: Number(id) });
+  } else if (id.match(/^[0-9a-fA-F]{24}$/)) {
+    pozo = await Pozo.findById(id);
+  }
+
+  if (!pozo) {
+    return res.status(404).json({ error: 'Pozo no encontrado' });
+  }
+
+  res.status(200).json(pozo);
+});
+
+// Obtener pozos por yacimiento (insensible a mayúsculas/minúsculas)
+const obtenerPorYacimiento = asyncHandler(async (req, res) => {
+  const { yacimiento } = req.params;
+
+  const resultado = await Pozo.find({
+    yacimiento: { $regex: new RegExp(`^${yacimiento}$`, 'i') }
+  });
+
+  if (resultado.length === 0) {
+    return res.status(404).json({ error: `No se encontraron pozos para el yacimiento '${yacimiento}'` });
+  }
+
+  res.status(200).json(resultado);
+});
 
 module.exports = { obtenerPozos, obtenerPorId, obtenerPorYacimiento };

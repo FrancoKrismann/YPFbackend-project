@@ -9,4 +9,5 @@ router.get('/yacimiento/:yacimiento', controller.obtenerPorYacimiento);
 //Ruta Get:/:id: Obtenemos un pozo específico por su ID
 router.get('/:id', controller.obtenerPorId);
 
+
 module.exports = router;

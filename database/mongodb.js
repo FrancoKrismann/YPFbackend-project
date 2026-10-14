@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGO_URI || `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@ypftest.hu7stc7.mongodb.net/mi_base?retryWrites=true&w=majority&appName=YPFtest`;
+    const uri = process.env.MONGO_URI || `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@ypftest.hu7stc7.mongodb.net/test?retryWrites=true&w=majority&appName=YPFtest`;
     
     // Conectamos usando Mongoose
     await mongoose.connect(uri, {
