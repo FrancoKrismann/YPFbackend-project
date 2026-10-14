@@ -65,7 +65,7 @@ YPFbackend-project/
 │   │   └── asyncHandler.js    # Envoltorio para promesas asíncronas
 │   ├── app.js                 # Configuración de Express y middlewares
 │   └── server.js              # Arranque del servidor y conexión a DB
-├── .env.example               # Plantilla de variables de entorno
+├── .env                       # Plantilla de variables de entorno
 ├── .gitignore                 # Archivos y carpetas ignorados por Git
 ├── package.json               # Dependencias y scripts del proyecto
 └── README.md                  # Documentación principal
