@@ -1,5 +1,23 @@
 # Documentación API RESTful - Gestión de Pozos Petroleros (YPF)
 
+> [!NOTE]
+> ### 📌 Portafolio Git - Organización de Ramas
+> * **`preEntrega2-main`**: Rama del proyecto correspondiente a la **Pre-entrega N° 2** (Gestión de Pozos Petroleros - YPF).
+> * **`Trailerflix-main`** (**`TRAILERFLIX`**): Rama del proyecto correspondiente a la **Pre-entrega N° 1**.
+> * **Ramas secundarias**: Ramas auxiliares de desarrollo, pruebas y trabajo continuo en el proyecto (`Franco`, `cambios-companero`, etc.).
+
+---
+
+### 🗄️ Conexión y Visualización en MongoDB Compass
+Para ver y explorar los datos del servidor de MongoDB se utilizó la aplicación de escritorio **MongoDB Compass**.
+
+* **Cadena de conexión (URI):**
+  ```text
+  mongodb+srv://francokrismann_db_user:2sumiKn1XAju11IQ@ypftest.hu7stc7.mongodb.net/?appName=YPFtest
+  ```
+
+---
+
 ## Sumario
 1. [Descripción del Proyecto](#descripción-del-proyecto)
 2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
@@ -84,8 +102,8 @@ YPFbackend-project/
    Crear un archivo `.env` en la raíz del proyecto basándose en `.env.example`:
    ```env
    PORT=3008
-   DB_PATH=./database/data.js
-   MONGO_URI=mongodb+srv://<usuario>:<password>@ypftest.hu7stc7.mongodb.net/test?appName=YPFtest
+   DB_PASSWORD=2sumiKn1XAju11IQ
+   DB_USER=francokrismann_db_user
    ```
 
 3. **Ejecutar en modo desarrollo:**
