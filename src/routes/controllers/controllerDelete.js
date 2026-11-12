@@ -14,11 +14,6 @@ const eliminarPozo = asyncHandler(async (req, res) => {
   if (!pozoEliminado) {
     return res.status(404).json({ error: 'Pozo no encontrado' });
   }
-
-  res.status(200).json({ 
-    mensaje: 'Pozo eliminado correctamente de la base de datos', 
-    data: pozoEliminado 
-  });
 });
 
 module.exports = { eliminarPozo };
