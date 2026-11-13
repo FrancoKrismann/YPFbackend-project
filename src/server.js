@@ -1,17 +1,19 @@
 require('dotenv').config();
 const app = require('./app');
-const PORT = process.env.PORT;
-const {connectDB} = require('../database/mongodb'); 
-const { seedPozos } = require('../database/datacarge'); 
+const PORT = process.env.SERVER_PORT;
+const {pool} = require('../database/sql.js'); 
 
 
 
-connectDB()
-  .then(seedPozos)
-  .then(() => {
-    app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('Error al iniciar:', err.message);
-    process.exit(1);
-  });
+(async () => {
+  try {
+    await pool.query('SELECT 1');
+    
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+    });
+    console.log('Conexión a MySQL OK');
+  } catch (err) {
+    console.error('Error de conexión:', err.message);
+  }
+})();;
