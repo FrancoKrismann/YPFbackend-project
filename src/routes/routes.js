@@ -1,13 +1,13 @@
 const express = require('express');
-const pozosGet = require('./pozoGet.js');
+const contenidoGet = require('./contenidoGets.js');
 const pozosPost = require('./pozoPost.js');
 const pozosPut = require('./pozoPut.js');
 const pozosDelete = require('./pozoDelete.js');
 const router = express.Router();
 
-router.use("/pozos",pozosGet);
-router.use("/pozos",pozosPost);
-router.use("/pozos",pozosPut);
-router.use("/pozos",pozosDelete);
+router.use("/contenido", contenidoGet);
+// router.use("/contenido");
+// router.use("/contenido");
+// router.use("/contenido");
 
 module.exports = router;
