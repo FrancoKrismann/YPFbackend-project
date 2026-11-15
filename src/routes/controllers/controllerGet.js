@@ -1,51 +1,42 @@
-const asyncHandler = require('../../utils/asyncHandler');
-const Pozo = require('../../models/pozo.model');
+const { Contenido, Categoria, Genero, Actor } = require('../../models');
 
-// Obtener todos los pozos (con filtro opcional por estado en query)
-const obtenerPozos = asyncHandler(async (req, res) => {
-  const { estado } = req.query;
-  const filtro = {};
+const incluir = [
+  { model: Categoria, attributes: ['nombre'] },
+  { model: Genero, attributes: ['nombre'], through: { attributes: [] } },
+  { model: Actor, attributes: ['nombre'], through: { attributes: [] } },
+];
 
-  if (estado) {
-    // Insensible a mayúsculas/minúsculas
-    filtro.estado = { $regex: new RegExp(`^${estado}$`, 'i') };
+// Aplana un contenido: categoria como texto, generos y actores como arrays de strings
+function formatear(contenido) {
+  const { Categoria, Generos, Actors, categoriaId, ...resto } = contenido.toJSON();
+
+  return {
+    ...resto,
+    categoria: Categoria?.nombre ?? null,
+    generos: Generos.map((g) => g.nombre),
+    actores: Actors.map((a) => a.nombre),
+  };
+}
+
+async function obtenerContenidos(req, res) {
+  try {
+    const contenidos = await Contenido.findAll({ include: incluir });
+    res.json(contenidos.map(formatear));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
+}
 
-  const resultado = await Pozo.find(filtro);
-  res.status(200).json(resultado);
-});
-
-// Obtener un pozo por ID numérico o por _id
-const obtenerPorId = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  let pozo = null;
-
-  if (!isNaN(id)) {
-    pozo = await Pozo.findOne({ id: Number(id) });
-  } else if (id.match(/^[0-9a-fA-F]{24}$/)) {
-    pozo = await Pozo.findById(id);
+async function obtenerContenidoPorId(req, res) {
+  try {
+    const contenido = await Contenido.findByPk(req.params.id, { include: incluir });
+    if (!contenido) return res.status(404).json({ error: 'No encontrado' });
+    res.json(contenido);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
+}
 
-  if (!pozo) {
-    return res.status(404).json({ error: 'Pozo no encontrado' });
-  }
-
-  res.status(200).json(pozo);
-});
-
-// Obtener pozos por yacimiento (insensible a mayúsculas/minúsculas)
-const obtenerPorYacimiento = asyncHandler(async (req, res) => {
-  const { yacimiento } = req.params;
-
-  const resultado = await Pozo.find({
-    yacimiento: { $regex: new RegExp(`^${yacimiento}$`, 'i') }
-  });
-
-  if (resultado.length === 0) {
-    return res.status(404).json({ error: `No se encontraron pozos para el yacimiento '${yacimiento}'` });
-  }
-
-  res.status(200).json(resultado);
-});
-
-module.exports = { obtenerPozos, obtenerPorId, obtenerPorYacimiento };
+module.exports = { obtenerContenidos, obtenerContenidoPorId };
