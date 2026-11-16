@@ -1,8 +1,8 @@
-// const express = require('express');
-// const router = express.Router();
-// // Importás tu controlador individual de Put
-// const { actualizarPozo } = require('./controllers/controllerPut');
+const express = require('express');
+const router = express.Router();
+const controller = require('./controllers/controllerPut.js');
 
-// router.put('/:id', actualizarPozo);
+// Ruta Put /:id: Actualizamos un contenido específico por su ID
+router.put('/:id', controller.actualizarContenido);
 
-// module.exports = router;
+module.exports = router;

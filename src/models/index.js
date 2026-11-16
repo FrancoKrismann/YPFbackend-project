@@ -1,4 +1,4 @@
-const sequelize = require('../../database/sql.js'); 
+const { sequelize } = require('../../database/sql.js'); 
 const Categoria = require('./categoria');
 const Genero = require('./genero');
 const Actor = require('./actor');
