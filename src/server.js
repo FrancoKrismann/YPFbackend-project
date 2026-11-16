@@ -11,7 +11,7 @@ const PORT = process.env.SERVER_PORT;
     await sequelize.authenticate();
     console.log('Conectado a MySQL');
 
-    await sequelize.sync();   // crea las tablas si no existen
+    await sequelize.sync({ force: true });  // crea las tablas si no existen
     await seed();             // carga el catálogo solo si está vacío
 
     app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
