@@ -13,8 +13,8 @@ function formatear(contenido) {
   return {
     ...resto,
     categoria: Categoria?.nombre ?? null,
-    generos: Generos.map((g) => g.nombre),
-    actores: Actors.map((a) => a.nombre),
+    generos: Generos ? Generos.map((g) => g.nombre) : [],
+    actores: Actors ? Actors.map((a) => a.nombre) : [],
   };
 }
 
@@ -32,7 +32,7 @@ async function obtenerContenidoPorId(req, res) {
   try {
     const contenido = await Contenido.findByPk(req.params.id, { include: incluir });
     if (!contenido) return res.status(404).json({ error: 'No encontrado' });
-    res.json(contenido);
+    res.json(formatear(contenido));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
