@@ -1,51 +1,76 @@
-// const asyncHandler = require('../../utils/asyncHandler');
-// const Pozo = require('../../models/pozo.model'); // Importamos el modelo de Mongoose
+const { Contenido, Categoria, Genero, Actor } = require('../../models');
 
-// const crearPozo = asyncHandler(async (req, res) => {
-//   // Soporta tanto Query Parameters como Body JSON
-//   const datos = Object.keys(req.query).length > 0 ? req.query : req.body;
-//   const { id, nombre, Nombre, yacimiento, estado, icono, profundidadMetros, produccionDiariaBarriles } = datos;
+const incluir = [
+  { model: Categoria, attributes: ['nombre'] },
+  { model: Genero, attributes: ['nombre'], through: { attributes: [] } },
+  { model: Actor, attributes: ['nombre'], through: { attributes: [] } },
+];
 
-//   const nombrePozo = nombre || Nombre;
+// Función para aplanar y formatear el contenido (igual que en el GET)
+function formatear(contenido) {
+  const { Categoria, Generos, Actors, categoriaId, ...resto } = contenido.toJSON();
 
-//   // Validación de campos requeridos mínimos
-//   if (!id || !nombrePozo) {
-//     return res.status(400).json({ 
-//       error: 'Parámetros incompletos. Debes enviar al menos id y nombre.' 
-//     });
-//   }
+  return {
+    ...resto,
+    categoria: Categoria?.nombre ?? null,
+    generos: Generos ? Generos.map((g) => g.nombre) : [],
+    actores: Actors ? Actors.map((a) => a.nombre) : [],
+  };
+}
 
-//   // Validación de estado: solo se permite 'activo', 'inactivo', 'mantenimiento' o 'cerrado'
-//   const estadosValidos = ['activo', 'inactivo', 'mantenimiento', 'cerrado'];
-//   const estadoFinal = estado ? estado.toLowerCase().trim() : 'activo';
+async function crearContenido(req, res) {
+  try {
+    const { titulo, categoria, generos, sinopsis, temporadas, reparto, trailer } = req.body;
 
-//   if (!estadosValidos.includes(estadoFinal)) {
-//     return res.status(400).json({
-//       error: `El estado '${estado}' no es válido. Debe ser uno de: ${estadosValidos.join(', ')}`
-//     });
-//   }
+    // 1. Buscar o crear la categoría si viene en el cuerpo de la petición
+    let categoriaRecord = null;
+    if (categoria) {
+      [categoriaRecord] = await Categoria.findOrCreate({
+        where: { nombre: categoria },
+      });
+    }
 
-//   // Creamos el nuevo documento con Mongoose
-//   // Si no se envía yacimiento, por defecto es 'Sierra Chata'
-//   const nuevoPozo = new Pozo({
-//     id: Number(id),
-//     nombre: nombrePozo,
-//     yacimiento: yacimiento || 'Sierra Chata',
-//     estado: estadoFinal,
-//     icono: icono || '🛢️',
-//     profundidadMetros: profundidadMetros ? Number(profundidadMetros) : 0,
-//     produccionDiariaBarriles: produccionDiariaBarriles ? Number(produccionDiariaBarriles) : 0
-//   });
+    // 2. Crear el registro principal en la tabla Contenido
+    const nuevoContenido = await Contenido.create({
+      titulo,
+      sinopsis,
+      temporadas,
+      trailer,
+      categoriaId: categoriaRecord ? categoriaRecord.id : null,
+    });
 
+    // 3. Asociar géneros (soporta tanto un array como un texto separado por comas)
+    if (generos) {
+      const listaGeneros = Array.isArray(generos)
+        ? generos
+        : generos.split(',').map((g) => g.trim());
 
-//   // Guardamos en la base de datos de MongoDB
-//   const pozoGuardado = await nuevoPozo.save();
+      const generosRecords = await Promise.all(
+        listaGeneros.map((nombre) => Genero.findOrCreate({ where: { nombre } }))
+      );
+      await nuevoContenido.setGeneros(generosRecords.map(([g]) => g));
+    }
 
-//   // Respondemos con código 201 (Created)
-//   res.status(201).json({
-//     mensaje: "Pozo creado exitosamente",
-//     pozo: pozoGuardado
-//   });
-// });
+    // 4. Asociar actores / reparto (soporta array o texto separado por comas)
+    if (reparto) {
+      const listaActores = Array.isArray(reparto)
+        ? reparto
+        : reparto.split(',').map((a) => a.trim());
 
-// module.exports = { crearPozo };
+      const actoresRecords = await Promise.all(
+        listaActores.map((nombre) => Actor.findOrCreate({ where: { nombre } }))
+      );
+      await nuevoContenido.setActors(actoresRecords.map(([a]) => a));
+    }
+
+    // 5. Volver a consultar el registro con todas sus relaciones y devolverlo formateado
+    const contenidoCompleto = await Contenido.findByPk(nuevoContenido.id, { include: incluir });
+    
+    res.status(201).json(formatear(contenidoCompleto));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+module.exports = { crearContenido };

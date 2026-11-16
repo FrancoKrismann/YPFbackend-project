@@ -1,8 +1,8 @@
-// const express = require('express');
-// const router = express.Router();
-// // Importás tu controlador individual de Delete
-// const { eliminarPozo } = require('./controllers/controllerDelete');
+const express = require('express');
+const router = express.Router();
+const controller = require('./controllers/controllerDelete.js');
 
-// router.delete('/:id', eliminarPozo);
+// Ruta Delete /:id: Eliminamos un contenido específico por su ID
+router.delete('/:id', controller.eliminarContenido);
 
-// module.exports = router;
+module.exports = router;
