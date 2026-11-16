@@ -1,9 +1,8 @@
-// const express = require('express');
-// const router = express.Router();
-// // Importás tu controlador individual de Post
-// const { crearPozo } = require('./controllers/controllerPost'); // Ajustá la ruta relativa si es necesario
+const express = require('express');
+const router = express.Router();
+const controller = require('./controllers/controllerPost.js');
 
-// router.post('/new', crearPozo);
-// router.post('/', crearPozo);
+// Ruta Post /: Creamos un nuevo contenido en la base de datos
+router.post('/', controller.crearContenido);
 
-// module.exports = router;
+module.exports = router;
