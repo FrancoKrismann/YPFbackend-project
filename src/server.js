@@ -1,17 +1,21 @@
 require('dotenv').config();
 const app = require('./app');
-const PORT = process.env.PORT;
-const {connectDB} = require('../database/mongodb'); 
-const { seedPozos } = require('../database/datacarge'); 
+const { sequelize } = require('../database/sql.js');
+const seed = require('./seed');
 
 
+const PORT = process.env.SERVER_PORT;
 
-connectDB()
-  .then(seedPozos)
-  .then(() => {
-    app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('Error al iniciar:', err.message);
-    process.exit(1);
-  });
+(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Conectado a MySQL');
+
+    await sequelize.sync();   // crea las tablas si no existen
+    await seed();             // carga el catálogo solo si está vacío
+
+    app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+  } catch (error) {
+    console.error('Error al iniciar el servidor:', error);
+  }
+})();

@@ -1,19 +1,32 @@
-const asyncHandler = require('../../utils/asyncHandler');
-const Pozo = require('../../models/pozo.model');
+const { Contenido } = require('../../models');
 
-const eliminarPozo = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+async function eliminarContenido(req, res) {
+  try {
+    const { id } = req.params;
 
-  // Busca y elimina por id numérico o por _id de MongoDB
-  let pozoEliminado = null;
+    // Validar que el ID sea numérico
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: 'El ID proporcionado no es válido' });
+    }
 
-  if (!isNaN(id)) {
-    pozoEliminado = await Pozo.findOneAndDelete({ id: Number(id) });
-  } 
+    const contenido = await Contenido.findByPk(id);
 
-  if (!pozoEliminado) {
-    return res.status(404).json({ error: 'Pozo no encontrado' });
+    if (!contenido) {
+      return res.status(404).json({ error: 'Contenido no encontrado' });
+    }
+
+    // 1. Desvincular géneros y actores para evitar restricciones de clave foránea
+    await contenido.setGeneros([]);
+    await contenido.setActors([]);
+
+    // 2. Eliminar el contenido
+    await contenido.destroy();
+
+    res.json({ mensaje: 'Contenido eliminado correctamente', id: Number(id) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
-});
+}
 
-module.exports = { eliminarPozo };
+module.exports = { eliminarContenido };
