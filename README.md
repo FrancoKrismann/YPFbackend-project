@@ -1,341 +1,449 @@
-# Documentación API RESTful - Gestión de Pozos Petroleros (YPF)
+# YPFbackend-project
 
-> [!NOTE]
-> ### 📌 Portafolio Git - Organización de Ramas
-> * **`preEntrega2-main`**: Rama del proyecto correspondiente a la **Pre-entrega N° 2** (Gestión de Pozos Petroleros - YPF).
-> * **`Trailerflix-main`** (**`TRAILERFLIX`**): Rama del proyecto correspondiente a la **Pre-entrega N° 1**.
-> * **Ramas secundarias**: Ramas auxiliares de desarrollo, pruebas y trabajo continuo en el proyecto (`Franco`, `cambios-companero`, etc.).
+API REST de catálogo de contenido audiovisual (series y películas) construida con **Node.js**, **Express** y **Sequelize** sobre **MySQL**.
+
+Cada contenido tiene una categoría, uno o más géneros y un reparto de actores. Las relaciones se crean automáticamente al registrar el contenido y la API devuelve todo en un formato simple (géneros y actores como arrays de texto).
 
 ---
 
-### 🗄️ Conexión y Visualización en MongoDB Compass
-Para ver y explorar los datos del servidor de MongoDB se utilizó la aplicación de escritorio **MongoDB Compass**.
+## Tecnologías
 
-* **Cadena de conexión (URI):**
-  ```text
-  mongodb+srv://francokrismann_db_user:2sumiKn1XAju11IQ@ypftest.hu7stc7.mongodb.net/?appName=YPFtest
-  ```
-
----
-
-## Sumario
-1. [Descripción del Proyecto](#descripción-del-proyecto)
-2. [Tecnologías Utilizadas](#tecnologías-utilizadas)
-3. [Estructura del Proyecto](#estructura-del-proyecto)
-4. [Instalación y Configuración](#instalación-y-configuración)
-5. [Tabla de Endpoints](#tabla-de-endpoints)
-6. [Ejemplos de Uso y Estructura de Datos](#ejemplos-de-uso-y-estructura-de-datos)
-   - [1. Consultar todos los pozos o filtrar por Query (GET)](#1-consultar-todos-los-pozos-o-filtrar-por-query-get)
-   - [2. Consultar un pozo específico por ID (GET)](#2-consultar-un-pozo-específico-por-id-get)
-   - [3. Consultar pozos por Yacimiento (GET)](#3-consultar-pozos-por-yacimiento-get)
-   - [4. Crear un nuevo pozo (POST)](#4-crear-un-nuevo-pozo-post)
-   - [5. Actualizar un pozo existente (PUT)](#5-actualizar-un-pozo-existente-put)
-   - [6. Eliminar un pozo por ID (DELETE)](#6-eliminar-un-pozo-por-id-delete)
-7. [Manejo de Errores](#manejo-de-errores)
+- Node.js + Express
+- Sequelize (ORM) + mysql2
+- MySQL
+- dotenv
+- Thunder Client / Postman para probar los endpoints
 
 ---
 
-## Descripción del Proyecto
-API RESTful modular construida con **Node.js** y **Express**, conectada a una base de datos NoSQL en **MongoDB Atlas** mediante el ODM **Mongoose**. 
+## Estructura del proyecto
 
-El sistema administra la información técnica y de producción de pozos petroleros (identificación, nombre, yacimiento geográfico, estado operativo, profundidad y barriles de producción diaria). Implementa un patrón modular de rutas individuales por método HTTP, controladores dedicados, validación de esquemas y manejo centralizado de excepciones asíncronas con `asyncHandler`.
-
----
-
-## Tecnologías Utilizadas
-* **Node.js** (Entorno de ejecución)
-* **Express.js** (Framework de backend para routing y middleware)
-* **MongoDB Atlas** (Base de datos NoSQL en la nube)
-* **Mongoose** (Modelado y validación de esquemas)
-* **dotenv** (Gestión de variables de entorno)
-* **Nodemon** (Recarga automática en entorno de desarrollo)
-* **CORS** (Manejo de intercambio de recursos de origen cruzado)
-
----
-
-## Estructura del Proyecto
-
-```text
+```
 YPFbackend-project/
 ├── database/
-│   ├── data.js                # Datos iniciales en memoria
-│   ├── dataCarge.js           # Script de sembrado inicial (seed)
-│   └── mongodb.js             # Módulo de conexión a MongoDB Atlas
+│   ├── data.json            # Datos de catálogo para cargar
+│   └── sql.js               # Conexión de Sequelize a MySQL
 ├── src/
-│   ├── middlewares/
-│   │   ├── auth.js            # Middleware de autenticación
-│   │   └── errorHandler.js    # Manejo centralizado de errores
+│   ├── app.js               # Configuración de Express y middlewares
+│   ├── server.js            # Arranque: conexión, sync y carga inicial
+│   ├── seed.js              # Carga inicial del catálogo
 │   ├── models/
-│   │   └── pozo.model.js      # Esquema y modelo de Mongoose
+│   │   ├── index.js         # Asociaciones entre modelos
+│   │   ├── contenido.js
+│   │   ├── categoria.js
+│   │   ├── genero.js
+│   │   └── actor.js
 │   ├── routes/
-│   │   ├── controllers/
-│   │   │   ├── controllerDelete.js # Lógica de eliminación
-│   │   │   ├── controllerGet.js    # Lógica de consultas y filtros
-│   │   │   ├── controllerPost.js   # Lógica de creación
-│   │   │   └── controllerPut.js    # Lógica de actualización
-│   │   ├── index.js           # Enrutador central
-│   │   ├── pozoDelete.js      # Sub-router DELETE
-│   │   ├── pozoGet.js         # Sub-router GET
-│   │   ├── pozoPost.js        # Sub-router POST
-│   │   ├── pozoPut.js         # Sub-router PUT
-│   │   └── routes.js          # Agrupador de mini-routers
-│   ├── utils/
-│   │   └── asyncHandler.js    # Envoltorio para promesas asíncronas
-│   ├── app.js                 # Configuración de Express y middlewares
-│   └── server.js              # Arranque del servidor y conexión a DB
-├── .env                       # Plantilla de variables de entorno
-├── .gitignore                 # Archivos y carpetas ignorados por Git
-├── package.json               # Dependencias y scripts del proyecto
-└── README.md                  # Documentación principal
+│   │   ├── routes.js        # Rutas principales
+│   │   ├── contenidoGets.js
+│   │   ├── contenidoPost.js
+│   │   ├── contenidoPut.js
+│   │   ├── contenidoDelete.js
+│   │   └── controllers/     # Lógica de cada operación
+│   ├── services/
+│   ├── utils/               # asyncHandler, formatear
+│   ├── validators/
+│   └── middlewares/
+├── .env
+└── package.json
 ```
 
 ---
 
-## Instalación y Configuración
+## Instalación
 
-1. **Clonar el repositorio e instalar dependencias:**
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/FrancoKrismann/YPFbackend-project.git
+cd YPFbackend-project
+npm install
+```
 
-2. **Configurar las variables de entorno:**
-   Crear un archivo `.env` en la raíz del proyecto basándose en `.env.example`:
-   ```env
-   PORT=3008
-   DB_PASSWORD=2sumiKn1XAju11IQ
-   DB_USER=francokrismann_db_user
-   ```
+### Variables de entorno
 
-3. **Ejecutar en modo desarrollo:**
-   ```bash
-   npm run dev
-   ```
+Creá un archivo `.env` en la raíz del proyecto. Los nombres deben coincidir con los que lee `database/sql.js`:
+
+```env
+PORT=3008
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=tu_contraseña
+DB_NAME=nombre_de_tu_db
+```
+
+> El archivo `.env` no se sube al repositorio (está en `.gitignore`).
+
+### Ejecutar
+
+```bash
+npm start
+```
+
+Si todo está bien, la terminal muestra:
+
+```
+Conectado a MySQL
+Catálogo ya cargado
+Servidor en http://localhost:3008
+```
+
+Para que el servidor se reinicie solo al guardar cambios, podés usar `node --watch src/server.js` en el script `start`.
 
 ---
 
-## Tabla de Endpoints
+## Base de datos
 
-| Método | Endpoint | Parámetros | Descripción | Código Éxito | Códigos Error |
-| :--- | :--- | :--- | :--- | :---: | :---: |
-| **GET** | `/pozos` | Query: `estado`, `yacimiento`, `nombre` (opcionales) | Lista todos los pozos o aplica filtros combinados | `200 OK` | `500 Server Error` |
-| **GET** | `/pozos/:id` | Path: `:id` (numérico o ObjectId) | Obtiene un pozo específico por su identificador | `200 OK` | `404 Not Found`, `500 Server Error` |
-| **GET** | `/pozos/yacimiento/:yacimiento` | Path: `:yacimiento` (nombre geográfico) | Obtiene todos los pozos de un yacimiento específico | `200 OK` | `404 Not Found`, `500 Server Error` |
-| **POST** | `/pozos/new` o `/pozos` | Body (JSON) o Query Parameters | Crea y almacena un nuevo pozo en la colección `pozos` | `201 Created` | `400 Bad Request`, `500 Server Error` |
-| **PUT** | `/pozos/:id` | Path: `:id` + Query o Body con campos a modificar | Actualiza campos de un pozo existente en la base de datos | `200 OK` | `400 Bad Request`, `404 Not Found` |
-| **DELETE** | `/pozos/:id` | Path: `:id` (numérico o ObjectId) | Elimina permanentemente el pozo de MongoDB | `200 OK` | `404 Not Found`, `500 Server Error` |
+### 1. Crear la base
+
+```sql
+CREATE DATABASE IF NOT EXISTS nombre_de_tu_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE nombre_de_tu_db;
+```
+
+### 2. Crear las tablas
+
+Las tablas **no hay que crearlas a mano**: Sequelize las genera a partir de los modelos al iniciar el servidor (`sequelize.sync()`). Para ver las que se crearon y su estructura:
+
+```sql
+SHOW TABLES;
+DESCRIBE contenidos;
+```
+
+La tabla `contenidos` tiene estas columnas:
+
+| Columna      | Tipo         | Notas                                   |
+|--------------|--------------|-----------------------------------------|
+| `id`         | INT          | Clave primaria, autoincremental         |
+| `titulo`     | VARCHAR(150) | Obligatorio                             |
+| `sinopsis`   | TEXT         | Obligatorio                             |
+| `temporadas` | INT          | Opcional (NULL para películas)          |
+| `trailer`    | VARCHAR(255) | Opcional                                |
+| `categoriaId`| INT          | Clave foránea a la tabla de categorías  |
+
+Los géneros y actores se relacionan con `contenidos` mediante tablas intermedias (relación muchos a muchos) que Sequelize crea solo.
+
+### 3. Modelo de relaciones
+
+```
+Categoria 1 ──── N Contenido N ──── N Genero
+                       │
+                       N
+                       │
+                     Actor
+```
+
+```javascript
+Contenido.belongsTo(Categoria, { as: 'categoria', foreignKey: 'categoriaId' });
+Categoria.hasMany(Contenido, { as: 'contenidos', foreignKey: 'categoriaId' });
+```
+
+### 4. Datos de prueba
+
+Lo más simple es cargar los datos **a través de la API** (ver la sección de pruebas), porque así se crean también las categorías, géneros y actores y sus relaciones.
+
+Si preferís cargar por SQL, primero hay que tener las categorías. Verificá el nombre real de la tabla con `SHOW TABLES;` y ajustalo en el `INSERT`:
+
+```sql
+-- Reemplazá "categorias" por el nombre real de tu tabla
+INSERT INTO categorias (nombre) VALUES ('Serie'), ('Película');
+```
+
+Con la categoría creada, podés insertar contenido directamente:
+
+```sql
+INSERT INTO contenidos (titulo, sinopsis, temporadas, trailer, categoriaId) VALUES
+('Riverdale',
+ 'Detrás de la fachada tranquila de un pueblo pequeño, un grupo de estudiantes investiga un crimen que deja al descubierto los secretos más oscuros de sus familias y vecinos.',
+ 7,
+ 'https://www.youtube.com/results?search_query=Riverdale+trailer+oficial',
+ 1),
+('Stranger Things',
+ 'Cuando un niño desaparece en un pequeño pueblo de Indiana, sus amigos, su familia y el jefe de policía se ven envueltos en un misterio que incluye experimentos secretos y fuerzas sobrenaturales.',
+ 5,
+ 'https://www.youtube.com/results?search_query=Stranger+Things+trailer+oficial',
+ 1),
+('Breaking Bad',
+ 'Un profesor de química de secundaria diagnosticado con una enfermedad grave se asocia con un ex alumno para fabricar y vender metanfetamina para asegurar el futuro de su familia.',
+ 5,
+ 'https://www.youtube.com/results?search_query=Breaking+Bad+trailer+oficial',
+ 1);
+```
+
+> Insertando por SQL, los contenidos quedan sin géneros ni actores. Para tener todo completo, usá el endpoint `POST`.
+
+### 5. Reiniciar las tablas sin borrar la base
+
+**Opción A: desde Sequelize** (en `server.js`, donde está el `sync`):
+
+```javascript
+await sequelize.sync({ force: true });
+```
+
+Recrea todas las tablas de los modelos con la estructura actual. **Quitá `force: true` después de la primera ejecución**, porque si queda, borra todo cada vez que reiniciás el servidor.
+
+**Opción B: desde MySQL.** Revisá los nombres con `SHOW TABLES;` e incluí también las tablas intermedias:
+
+```sql
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS contenidos, categorias, generos, actors;
+-- agregá acá las tablas intermedias que aparezcan en SHOW TABLES
+SET FOREIGN_KEY_CHECKS = 1;
+```
+
+**Opción C: solo vaciar los datos** (mantiene la estructura y reinicia los ids):
+
+```sql
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE contenidos;
+-- una línea por cada tabla
+SET FOREIGN_KEY_CHECKS = 1;
+```
+
+> Estas operaciones no se pueden deshacer. Hacé un respaldo antes si los datos importan.
 
 ---
 
-## Ejemplos de Uso y Estructura de Datos
+## Endpoints
 
-### 1. Consultar todos los pozos o filtrar por Query (GET)
+URL base: `http://localhost:3008`
 
-**Petición:**
-```http
-GET /pozos?estado=activo&yacimiento=Loma%20Campana HTTP/1.1
-Host: localhost:3008
-```
+> Las rutas de esta tabla corresponden a lo configurado en `routes.js`. Si cambiás el prefijo (`app.use('/contenido', ...)`), actualizá la documentación.
 
-**Respuesta exitosa (`200 OK`):**
-```json
-[
-  {
-    "_id": "670c5a1f2b189c4d8e7f1201",
-    "id": 1,
-    "nombre": "Pozo A-1",
-    "yacimiento": "Loma Campana",
-    "estado": "activo",
-    "icono": "🛢️",
-    "profundidadMetros": 3200,
-    "produccionDiariaBarriles": 450,
-    "createdAt": "2026-10-12T20:30:00.000Z",
-    "updatedAt": "2026-10-12T20:30:00.000Z"
-  }
-]
-```
+| Método   | Ruta              | Descripción                              |
+|----------|-------------------|------------------------------------------|
+| `GET`    | `/contenido`      | Lista todo el contenido                  |
+| `GET`    | `/contenido/:id`  | Devuelve un contenido por id             |
+| `POST`   | `/contenido`      | Crea un contenido nuevo                  |
+| `PUT`    | `/contenido/:id`  | Modifica un contenido existente          |
+| `DELETE` | `/contenido/:id`  | Elimina un contenido                     |
 
----
+### Formato de respuesta
 
-### 2. Consultar un pozo específico por ID (GET)
+Todos los endpoints devuelven el contenido con este formato:
 
-**Petición:**
-```http
-GET /pozos/8 HTTP/1.1
-Host: localhost:3008
-```
-
-**Respuesta exitosa (`200 OK`):**
 ```json
 {
-  "_id": "670c5b332b189c4d8e7f1208",
-  "id": 8,
-  "nombre": "Pozo H-8",
-  "yacimiento": "Rincón del Mangrullo",
-  "estado": "activo",
-  "icono": "⚡",
-  "profundidadMetros": 3300,
-  "produccionDiariaBarriles": 510,
-  "createdAt": "2026-10-13T21:00:00.000Z",
-  "updatedAt": "2026-10-13T21:00:00.000Z"
+  "id": 1,
+  "titulo": "Riverdale",
+  "sinopsis": "Detrás de la fachada tranquila de un pueblo pequeño...",
+  "temporadas": 7,
+  "trailer": "https://www.youtube.com/results?search_query=Riverdale+trailer+oficial",
+  "categoria": "Serie",
+  "generos": ["Drama", "Misterio", "Suspenso"],
+  "actores": ["KJ Apa", "Lili Reinhart", "Camila Mendes"]
 }
 ```
 
----
+La conversión se hace en `src/utils/formatear.js`, y es la misma para todos los controladores:
 
-### 3. Consultar pozos por Yacimiento (GET)
+```javascript
+function formatear(contenido) {
+  const plano = contenido.toJSON();
+  const { categoria, categoriaId, Generos, Actors, ...resto } = plano;
 
-**Petición:**
-```http
-GET /pozos/yacimiento/Cruz%20de%20Lorena HTTP/1.1
-Host: localhost:3008
-```
-
-**Respuesta exitosa (`200 OK`):**
-```json
-[
-  {
-    "_id": "670c5c442b189c4d8e7f1207",
-    "id": 7,
-    "nombre": "Pozo G-7",
-    "yacimiento": "Cruz de Lorena",
-    "estado": "activo",
-    "icono": "🛢️",
-    "profundidadMetros": 3750,
-    "produccionDiariaBarriles": 620
-  }
-]
-```
-
----
-
-### 4. Crear un nuevo pozo (POST)
-
-## Tecnologías Utilizadas
-* Node.js & Express.js
-* MongoDB Atlas & Mongoose
-* dotenv & Nodemon
-
-#### A. Mediante Body (JSON):
-**Petición:**
-```http
-POST /pozos/new HTTP/1.1
-Host: localhost:3008
-Content-Type: application/json
-
-{
-  "id": 9,
-  "nombre": "Pozo I-9",
-  "yacimiento": "Aguada de Castro",
-  "estado": "mantenimiento",
-  "icono": "🔧",
-  "profundidadMetros": 3600,
-  "produccionDiariaBarriles": 95
+  return {
+    ...resto,
+    categoria: categoria?.nombre ?? null,
+    generos: (Generos ?? []).map((g) => g.nombre),
+    actores: (Actors ?? []).map((a) => a.nombre),
+  };
 }
 ```
 
-#### B. Mediante Query Parameters:
-```http
-POST /pozos/new?id=9&nombre=Pozo%20I-9&yacimiento=Aguada%20de%20Castro&estado=mantenimiento&icono=🔧&profundidadMetros=3600&produccionDiariaBarriles=95 HTTP/1.1
-Host: localhost:3008
-```
+### Cuerpo de la petición (POST y PUT)
 
-**Respuesta exitosa (`201 Created`):**
-```json
-{
-  "mensaje": "Pozo creado exitosamente",
-  "pozo": {
-    "_id": "670c5d552b189c4d8e7f1209",
-    "id": 9,
-    "nombre": "Pozo I-9",
-    "yacimiento": "Aguada de Castro",
-    "estado": "mantenimiento",
-    "icono": "🔧",
-    "profundidadMetros": 3600,
-    "produccionDiariaBarriles": 95,
-    "createdAt": "2026-10-13T21:15:00.000Z",
-    "updatedAt": "2026-10-13T21:15:00.000Z"
-  }
-}
-```
+Se envía en **JSON** con el header `Content-Type: application/json`.
+
+| Campo        | Tipo             | Obligatorio | Notas                                                       |
+|--------------|------------------|-------------|-------------------------------------------------------------|
+| `titulo`     | string           | Sí          | Hasta 150 caracteres                                        |
+| `sinopsis`   | string           | Sí          |                                                             |
+| `categoria`  | string           | Sí          | Se busca o se crea por nombre (por ej. `Serie`, `Película`) |
+| `generos`    | string o array   | No          | Texto separado por comas o array                            |
+| `reparto`    | string o array   | No          | Texto separado por comas o array                            |
+| `temporadas` | number           | No          | Omitir en películas                                         |
+| `trailer`    | string           | No          | URL                                                         |
+
+> `generos` y `reparto` aceptan `"Drama, Misterio"` o `["Drama", "Misterio"]`. Los géneros y actores que no existan se crean automáticamente (`findOrCreate`).
 
 ---
 
-### 5. Actualizar un pozo existente (PUT)
+## Pruebas de los endpoints
 
-Actualiza de forma parcial o total un pozo buscando por su ID. Los campos a modificar pueden enviarse a través de **Query Parameters** o en el **Body (JSON)**.
+Se pueden ejecutar con Thunder Client (extensión de VS Code), Postman o `curl`.
 
-**Petición:**
-```http
-PUT /pozos/8?estado=inactivo&produccionDiariaBarriles=0 HTTP/1.1
-Host: localhost:3008
-```
+> **Importante:** en Thunder Client, el cuerpo hay que enviarlo en la pestaña **Body → JSON**. Si se usa la pestaña **Form** (multipart/form-data), Express recibe `req.body` vacío (`{}`), porque la API solo procesa JSON.
 
-**Respuesta exitosa (`200 OK`):**
+### 1. Crear contenido: `POST /contenido`
+
+**Body (JSON):**
+
 ```json
 {
-  "mensaje": "Pozo actualizado correctamente en la base de datos",
-  "data": {
-    "_id": "670c5b332b189c4d8e7f1208",
-    "id": 8,
-    "nombre": "Pozo H-8",
-    "yacimiento": "Rincón del Mangrullo",
-    "estado": "inactivo",
-    "icono": "⚡",
-    "profundidadMetros": 3300,
-    "produccionDiariaBarriles": 0,
-    "createdAt": "2026-10-13T21:00:00.000Z",
-    "updatedAt": "2026-10-13T21:30:00.000Z"
-  }
+  "titulo": "Riverdale",
+  "categoria": "Serie",
+  "generos": "Drama, Misterio, Suspenso",
+  "sinopsis": "Detrás de la fachada tranquila de un pueblo pequeño, un grupo de estudiantes investiga un crimen que deja al descubierto los secretos más oscuros de sus familias y vecinos.",
+  "temporadas": 7,
+  "reparto": "KJ Apa, Lili Reinhart, Camila Mendes, Cole Sprouse, Madelaine Petsch",
+  "trailer": "https://www.youtube.com/results?search_query=Riverdale+trailer+oficial"
 }
 ```
 
----
+**curl:**
 
-### 6. Eliminar un pozo por ID (DELETE)
-
-**Petición:**
-```http
-DELETE /pozos/8 HTTP/1.1
-Host: localhost:3008
+```bash
+curl -X POST http://localhost:3008/contenido \
+  -H "Content-Type: application/json" \
+  -d '{
+    "titulo": "Riverdale",
+    "categoria": "Serie",
+    "generos": "Drama, Misterio, Suspenso",
+    "sinopsis": "Detrás de la fachada tranquila de un pueblo pequeño...",
+    "temporadas": 7,
+    "reparto": "KJ Apa, Lili Reinhart, Camila Mendes",
+    "trailer": "https://www.youtube.com/results?search_query=Riverdale+trailer+oficial"
+  }'
 ```
 
-**Respuesta exitosa (`200 OK`):**
+**Respuesta esperada:** `201 Created`
+
 ```json
 {
-  "mensaje": "Pozo eliminado correctamente de la base de datos",
-  "data": {
-    "_id": "670c5b332b189c4d8e7f1208",
-    "id": 8,
-    "nombre": "Pozo H-8",
-    "yacimiento": "Rincón del Mangrullo",
-    "estado": "inactivo"
-  }
+  "id": 1,
+  "titulo": "Riverdale",
+  "sinopsis": "Detrás de la fachada tranquila de un pueblo pequeño...",
+  "temporadas": 7,
+  "trailer": "https://www.youtube.com/results?search_query=Riverdale+trailer+oficial",
+  "categoria": "Serie",
+  "generos": ["Drama", "Misterio", "Suspenso"],
+  "actores": ["KJ Apa", "Lili Reinhart", "Camila Mendes", "Cole Sprouse", "Madelaine Petsch"]
 }
 ```
 
+### 2. Crear una película (sin temporadas)
+
+```json
+{
+  "titulo": "Interestelar",
+  "categoria": "Película",
+  "generos": ["Ciencia ficción", "Drama", "Aventura"],
+  "sinopsis": "Un grupo de astronautas viaja a través de un agujero de gusano en busca de un nuevo hogar para la humanidad.",
+  "reparto": ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"],
+  "trailer": "https://www.youtube.com/results?search_query=Interestelar+trailer+oficial"
+}
+```
+
+**Respuesta esperada:** `201 Created`, con `"temporadas": null` y `"categoria": "Película"`.
+
+### 3. Más datos de prueba
+
+```json
+{
+  "titulo": "Stranger Things",
+  "categoria": "Serie",
+  "generos": "Ciencia ficción, Terror, Drama",
+  "sinopsis": "Cuando un niño desaparece en un pequeño pueblo de Indiana, sus amigos, su familia y el jefe de policía se ven envueltos en un misterio que incluye experimentos secretos y fuerzas sobrenaturales.",
+  "temporadas": 5,
+  "reparto": "Millie Bobby Brown, Finn Wolfhard, Winona Ryder, David Harbour, Gaten Matarazzo",
+  "trailer": "https://www.youtube.com/results?search_query=Stranger+Things+trailer+oficial"
+}
+```
+
+```json
+{
+  "titulo": "Breaking Bad",
+  "categoria": "Serie",
+  "generos": "Drama, Crimen, Suspenso",
+  "sinopsis": "Un profesor de química de secundaria diagnosticado con una enfermedad grave se asocia con un ex alumno para fabricar y vender metanfetamina para asegurar el futuro de su familia.",
+  "temporadas": 5,
+  "reparto": "Bryan Cranston, Aaron Paul, Anna Gunn, Dean Norris, Bob Odenkirk",
+  "trailer": "https://www.youtube.com/results?search_query=Breaking+Bad+trailer+oficial"
+}
+```
+
+### 4. Listar todo: `GET /contenido`
+
+```bash
+curl http://localhost:3008/contenido
+```
+
+**Respuesta esperada:** `200 OK`, con un array de contenidos en el formato de respuesta.
+
+### 5. Obtener por id: `GET /contenido/:id`
+
+```bash
+curl http://localhost:3008/contenido/1
+```
+
+**Respuesta esperada:** `200 OK`, con el contenido en el formato de respuesta (géneros y actores como arrays de texto).
+
+**Id inexistente:**
+
+```bash
+curl http://localhost:3008/contenido/9999
+```
+
+```json
+{ "error": "No encontrado" }
+```
+
+Estado: `404 Not Found`.
+
+### 6. Modificar: `PUT /contenido/:id`
+
+Para modificar hay que usar el **id real** del registro. Si se usa un texto en lugar del id (por ejemplo `/contenido/nuevo`), la API lo interpreta como un id inexistente y devuelve `404`.
+
+```bash
+curl -X PUT http://localhost:3008/contenido/1 \
+  -H "Content-Type: application/json" \
+  -d '{ "titulo": "Riverdale (editado)", "temporadas": 7 }'
+```
+
+**Respuesta esperada:** `200 OK` con el contenido actualizado.
+
+**Id inexistente:**
+
+```json
+{ "error": "Contenido no encontrado" }
+```
+
+Estado: `404 Not Found`.
+
+### 7. Eliminar: `DELETE /contenido/:id`
+
+```bash
+curl -X DELETE http://localhost:3008/contenido/1
+```
+
+**Respuesta esperada:** `200 OK` (o `204 No Content`, según lo que devuelva el controlador).
+
 ---
 
-## Manejo de Errores
+## Errores frecuentes
 
-La API utiliza respuestas JSON normalizadas para los estados de error:
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| `req.body` llega vacío (`{}`) | Se envió como Form (multipart) o falta `Content-Type: application/json` | Enviar en Body → **JSON**. Verificar que `express.json()` esté antes de las rutas |
+| `404` al hacer `PUT /contenido/nuevo` | `nuevo` se interpreta como `:id` | Usar `POST /contenido` para crear y `PUT /contenido/<id>` para editar |
+| `ERR_HTTP_INVALID_STATUS_CODE` | Se llamó `res.json("texto", objeto)` con dos argumentos | `res.json()` recibe un único argumento: `res.status(201).json(formatear(contenido))` |
+| `Field 'categoriaId' doesn't have a default value` | El `create` no recibió `categoriaId` | Pasar `categoriaId: categoriaRecord.id` y enviar el campo `categoria` en el body |
+| `categoria: null` o aparece `Categorium` en la respuesta | El `include` no tiene el alias `as: 'categoria'` | Usar `{ model: Categoria, as: 'categoria', attributes: ['nombre'] }` en `incluir` |
+| Géneros y actores llegan como objetos | El controlador devuelve el objeto de Sequelize sin pasar por `formatear` | Usar `formatear(contenido)` en todos los controladores |
+| Los cambios no se reflejan | El servidor no se reinició | Cortar con Ctrl+C y ejecutar `npm start`, o usar `node --watch` |
 
-* **`400 Bad Request`** (Datos faltantes o valores no permitidos en el enum de `estado`):
-  ```json
-  {
-    "error": "El estado 'cerado' no es válido. Debe ser uno de: activo, inactivo, mantenimiento, cerrado"
-  }
-  ```
+---
 
-* **`404 Not Found`** (Recurso inexistente en MongoDB):
-  ```json
-  {
-    "error": "Pozo no encontrado"
-  }
-  ```
+## Scripts
 
-* **`500 Internal Server Error`** (Fallo interno o de conexión):
-  ```json
-  {
-    "error": "Error interno del servidor"
-  }
-  ```
+| Comando       | Descripción                  |
+|---------------|------------------------------|
+| `npm start`   | Inicia el servidor           |
+
+---
+
+## Autor
+
+Franco Krismann: [github.com/FrancoKrismann](https://github.com/FrancoKrismann)

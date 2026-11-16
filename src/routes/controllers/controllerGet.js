@@ -1,22 +1,6 @@
 const { Contenido, Categoria, Genero, Actor } = require('../../models');
+const { incluir, formatear } = require('../../utils/asyncHandler');
 
-const incluir = [
-  { model: Categoria, attributes: ['nombre'] },
-  { model: Genero, attributes: ['nombre'], through: { attributes: [] } },
-  { model: Actor, attributes: ['nombre'], through: { attributes: [] } },
-];
-
-// Aplana un contenido: categoria como texto, generos y actores como arrays de strings
-function formatear(contenido) {
-  const { Categoria, Generos, Actors, categoriaId, ...resto } = contenido.toJSON();
-
-  return {
-    ...resto,
-    categoria: Categoria?.nombre ?? null,
-    generos: Generos ? Generos.map((g) => g.nombre) : [],
-    actores: Actors ? Actors.map((a) => a.nombre) : [],
-  };
-}
 
 async function obtenerContenidos(req, res) {
   try {

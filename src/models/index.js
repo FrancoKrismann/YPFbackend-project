@@ -5,8 +5,8 @@ const Actor = require('./actor');
 const Contenido = require('./contenido');
 
 // 1:N
-Categoria.hasMany(Contenido, { foreignKey: { name: 'categoriaId', allowNull: false } });
-Contenido.belongsTo(Categoria, { foreignKey: 'categoriaId' });
+Contenido.belongsTo(Categoria, { as: 'categoria', foreignKey: 'categoriaId' });
+Categoria.hasMany(Contenido, { as: 'contenidos', foreignKey: 'categoriaId' });
 
 // N:M
 Contenido.belongsToMany(Genero, { through: 'contenido_genero', foreignKey: 'contenidoId', otherKey: 'generoId', timestamps: false });
