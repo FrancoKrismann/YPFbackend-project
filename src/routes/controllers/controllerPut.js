@@ -8,6 +8,7 @@ const incluir = [
 
 function formatear(contenido) {
   const { Categoria, Generos, Actors, categoriaId, ...resto } = contenido.toJSON();
+
   return {
     ...resto,
     categoria: Categoria?.nombre ?? null,
