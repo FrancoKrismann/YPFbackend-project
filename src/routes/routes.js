@@ -1,8 +1,8 @@
 const express = require('express');
 const contenidoGet = require('./contenidoGets.js');
-const pozosPost = require('./pozoPost.js');
-const pozosPut = require('./pozoPut.js');
-const pozosDelete = require('./pozoDelete.js');
+const pozosPost = require('./contenidoPost.js');
+const pozosPut = require('./contenidoPut.js');
+const pozosDelete = require('./contenidoDelete.js');
 const router = express.Router();
 
 router.use("/contenido", contenidoGet);
