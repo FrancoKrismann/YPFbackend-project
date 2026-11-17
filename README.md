@@ -127,12 +127,37 @@ Los géneros y actores se relacionan con `contenidos` mediante tablas intermedia
 ### 3. Modelo de relaciones
 
 ```
-Categoria 1 ──── N Contenido N ──── N Genero
+                 ┌───────────┐
+                 │ Categoria │
+                 └─────┬─────┘
+                       │ 1
                        │
-                       N
-                       │
-                     Actor
+                       │ N
+┌────────┐  N    ┌───────────┐   N   ┌───────┐
+│ Genero │───────│ Contenido │───────│ Actor │
+└────────┘  N    └───────────┘   N   └───────┘
 ```
+
+Resumen de las relaciones:
+
+```
+Categoria 1 ──── N Contenido
+Contenido N ──── N Genero   (tabla intermedia)
+Contenido N ──── N Actor    (tabla intermedia)
+```
+
+Tablas del modelo (el diagrama de dbDesigner tiene que coincidir con esto):
+
+| Tabla | Columnas principales |
+|-------|----------------------|
+| `categorias` | `id` (PK), `nombre` |
+| `contenidos` | `id` (PK), `titulo`, `sinopsis`, `temporadas`, `trailer`, `categoriaId` (FK a categorías) |
+| `generos` | `id` (PK), `nombre` |
+| `actors` | `id` (PK), `nombre` |
+| Intermedia contenido-género | FK de contenido y FK de género (juntas forman la PK) |
+| Intermedia contenido-actor | FK de contenido y FK de actor (juntas forman la PK) |
+
+> Los nombres exactos de las tablas intermedias y de sus columnas los genera Sequelize. Confirmalos con `SHOW TABLES;` y `DESCRIBE nombre_de_la_tabla;` y ajustá esta tabla si difieren.
 
 ```javascript
 Contenido.belongsTo(Categoria, { as: 'categoria', foreignKey: 'categoriaId' });
@@ -215,7 +240,11 @@ URL base: `http://localhost:3008`
 |----------|-------------------|------------------------------------------|
 | `GET`    | `/contenido`      | Lista todo el contenido                  |
 | `GET`    | `/contenido/:id`  | Devuelve un contenido por id             |
-| `POST`   | `/contenido/nuevo`| Crea un contenido nuevo                  |
+| `GET`    | `/contenido/titulo/:titulo`       | Filtra por título (coincidencia parcial) |
+| `GET`    | `/contenido/genero/:genero`       | Filtra por género                        |
+| `GET`    | `/contenido/categoria/:categoria` | Filtra por categoría (Serie, Película)   |
+| `GET`    | `/contenido/actor/:actor`         | Filtra por actor del reparto             |
+| `POST`   | `/contenido`      | Crea un contenido nuevo                  |
 | `PUT`    | `/contenido/:id`  | Modifica un contenido existente          |
 | `DELETE` | `/contenido/:id`  | Elimina un contenido                     |
 
@@ -422,6 +451,74 @@ curl -X DELETE http://localhost:3008/contenido/1
 
 ---
 
+## Búsquedas filtradas (GET)
+
+Devuelven un **array** de contenidos en el mismo formato de respuesta de siempre (`categoria` como texto, `generos` y `actores` como arrays de texto). Si no hay coincidencias, el resultado es un array vacío o un `404`, según lo que devuelva el controlador.
+
+> Los espacios y caracteres especiales deben ir codificados en la URL: `Breaking Bad` se escribe `Breaking%20Bad`. Thunder Client y Postman lo hacen solo; con `curl` hay que escribirlo a mano.
+
+### 1. Por título: `GET /contenido/titulo/:titulo`
+
+```bash
+curl http://localhost:3008/contenido/titulo/Riverdale
+curl http://localhost:3008/contenido/titulo/Breaking%20Bad
+```
+
+**Respuesta esperada:** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "titulo": "Riverdale",
+    "sinopsis": "Detrás de la fachada tranquila de un pueblo pequeño...",
+    "temporadas": 7,
+    "trailer": "https://www.youtube.com/results?search_query=Riverdale+trailer+oficial",
+    "categoria": "Serie",
+    "generos": ["Drama", "Misterio", "Suspenso"],
+    "actores": ["KJ Apa", "Lili Reinhart", "Camila Mendes", "Cole Sprouse", "Madelaine Petsch"]
+  }
+]
+```
+
+### 2. Por género: `GET /contenido/genero/:genero`
+
+```bash
+curl http://localhost:3008/contenido/genero/Drama
+curl http://localhost:3008/contenido/genero/Ciencia%20ficci%C3%B3n
+```
+
+**Respuesta esperada:** `200 OK`, con todos los contenidos que tengan ese género (por ejemplo, Riverdale, Stranger Things y Breaking Bad para `Drama`).
+
+### 3. Por categoría: `GET /contenido/categoria/:categoria`
+
+```bash
+curl http://localhost:3008/contenido/categoria/Serie
+curl http://localhost:3008/contenido/categoria/Pel%C3%ADcula
+```
+
+**Respuesta esperada:** `200 OK`, con todos los contenidos de esa categoría. En las películas, `temporadas` viene en `null`.
+
+### 4. Por actor: `GET /contenido/actor/:actor`
+
+```bash
+curl http://localhost:3008/contenido/actor/Lili%20Reinhart
+curl http://localhost:3008/contenido/actor/Bryan%20Cranston
+```
+
+**Respuesta esperada:** `200 OK`, con los contenidos en los que participa ese actor.
+
+### 5. Casos a probar
+
+| Prueba | Qué verificar |
+|--------|---------------|
+| Mayúsculas y minúsculas (`riverdale` vs `Riverdale`) | MySQL compara sin distinguir mayúsculas con la collation por defecto, debería devolver lo mismo |
+| Valor inexistente (`/contenido/genero/Western`) | Array vacío o `404`, sin error 500 |
+| Coincidencia parcial (`/contenido/titulo/River`) | Devuelve Riverdale solo si el controlador usa `LIKE` |
+| Acentos (`Película`, `Ciencia ficción`) | Codificar la URL; si no devuelve nada, revisar cómo se guardó el nombre |
+
+---
+
 ## Errores frecuentes
 
 | Síntoma | Causa | Solución |
@@ -443,3 +540,7 @@ curl -X DELETE http://localhost:3008/contenido/1
 | `npm start`   | Inicia el servidor           |
 
 ---
+
+## Autor
+
+Franco Krismann: [github.com/FrancoKrismann](https://github.com/FrancoKrismann)
