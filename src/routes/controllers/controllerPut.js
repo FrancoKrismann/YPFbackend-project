@@ -1,22 +1,6 @@
 const { Contenido, Categoria, Genero, Actor } = require('../../models');
 
-const incluir = [
-  { model: Categoria, attributes: ['nombre'] },
-  { model: Genero, attributes: ['nombre'], through: { attributes: [] } },
-  { model: Actor, attributes: ['nombre'], through: { attributes: [] } },
-];
-
-function formatear(contenido) {
-  const { Categoria, Generos, Actors, categoriaId, ...resto } = contenido.toJSON();
-
-  return {
-    ...resto,
-    categoria: Categoria?.nombre ?? null,
-    generos: Generos ? Generos.map((g) => g.nombre) : [],
-    actores: Actors ? Actors.map((a) => a.nombre) : [],
-  };
-}
-
+const { incluir, formatear } = require('../../utils/asyncHandler');
 async function actualizarContenido(req, res) {
   try {
     const { id } = req.params;
