@@ -215,7 +215,7 @@ URL base: `http://localhost:3008`
 |----------|-------------------|------------------------------------------|
 | `GET`    | `/contenido`      | Lista todo el contenido                  |
 | `GET`    | `/contenido/:id`  | Devuelve un contenido por id             |
-| `POST`   | `/contenido`      | Crea un contenido nuevo                  |
+| `POST`   | `/contenido/nuevo`| Crea un contenido nuevo                  |
 | `PUT`    | `/contenido/:id`  | Modifica un contenido existente          |
 | `DELETE` | `/contenido/:id`  | Elimina un contenido                     |
 
@@ -443,7 +443,3 @@ curl -X DELETE http://localhost:3008/contenido/1
 | `npm start`   | Inicia el servidor           |
 
 ---
-
-## Autor
-
-Franco Krismann: [github.com/FrancoKrismann](https://github.com/FrancoKrismann)
