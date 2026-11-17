@@ -211,13 +211,18 @@ URL base: `http://localhost:3008`
 
 > Las rutas de esta tabla corresponden a lo configurado en `routes.js`. Si cambiás el prefijo (`app.use('/contenido', ...)`), actualizá la documentación.
 
-| Método   | Ruta              | Descripción                              |
-|----------|-------------------|------------------------------------------|
-| `GET`    | `/contenido`      | Lista todo el contenido                  |
-| `GET`    | `/contenido/:id`  | Devuelve un contenido por id             |
-| `POST`   | `/contenido/nuevo`| Crea un contenido nuevo                  |
-| `PUT`    | `/contenido/:id`  | Modifica un contenido existente          |
-| `DELETE` | `/contenido/:id`  | Elimina un contenido                     |
+| Método   | Ruta                              | Descripción                                                          |
+|----------|-----------------------------------|----------------------------------------------------------------------|
+| `GET`    | `/contenido`                      | Lista todo el contenido (admite filtros combinados por Query Params) |
+| `GET`    | `/contenido/:id`                  | Obtiene un contenido por su ID numérico o por su título             |
+| `GET`    | `/contenido/titulo/:titulo`       | Filtra contenidos por título (coincidencia parcial)                  |
+| `GET`    | `/contenido/categoria/:categoria` | Filtra contenidos por categoría (`Serie` o `Película`)               |
+| `GET`    | `/contenido/genero/:genero`       | Filtra contenidos por género (ej: `Drama`, `Ciencia Ficción`)        |
+| `GET`    | `/contenido/actor/:actor`         | Filtra contenidos por actor / reparto (ej: `Pedro Pascal`)           |
+| `POST`   | `/contenido`                      | Crea un nuevo contenido                                              |
+| `PUT`    | `/contenido/:id`                  | Modifica un contenido existente por su ID                            |
+| `DELETE` | `/contenido/:id`                  | Elimina un contenido por su ID numérico o por su título              |
+| `DELETE` | `/contenido/titulo/:titulo`       | Elimina un contenido por su título                                   |
 
 ### Formato de respuesta
 
@@ -370,29 +375,95 @@ curl -X POST http://localhost:3008/contenido \
 curl http://localhost:3008/contenido
 ```
 
-**Respuesta esperada:** `200 OK`, con un array de contenidos en el formato de respuesta.
+**Respuesta esperada:** `200 OK`, con un array de todos los contenidos en el formato de respuesta.
 
-### 5. Obtener por id: `GET /contenido/:id`
+---
 
+### 5. Filtrar contenidos por Query Parameters: `GET /contenido?...`
+
+El endpoint raíz `GET /contenido` permite aplicar filtros combinados a través de parámetros de consulta (query params):
+
+#### A. Filtrar por Categoría
 ```bash
-curl http://localhost:3008/contenido/1
+curl "http://localhost:3008/contenido?categoria=Serie"
+curl "http://localhost:3008/contenido?categoria=Película"
 ```
 
-**Respuesta esperada:** `200 OK`, con el contenido en el formato de respuesta (géneros y actores como arrays de texto).
+#### B. Filtrar por Género
+```bash
+curl "http://localhost:3008/contenido?genero=Drama"
+curl "http://localhost:3008/contenido?genero=Ciencia%20Ficción"
+```
 
-**Id inexistente:**
+#### C. Filtrar por Actor o Reparto
+```bash
+curl "http://localhost:3008/contenido?actor=Pedro%20Pascal"
+```
 
+#### D. Filtrar / Buscar por Título (coincidencia parcial)
+```bash
+curl "http://localhost:3008/contenido?titulo=Mandalorian"
+```
+
+#### E. Combinar múltiples filtros a la vez
+```bash
+curl "http://localhost:3008/contenido?categoria=Serie&genero=Drama"
+```
+
+> **En Thunder Client:** En lugar de escribir la URL larga, puedes ir a la pestaña **Query** debajo de la barra de direcciones y agregar los parámetros `categoria`, `genero`, `actor` o `titulo` en la tabla de clave/valor.
+
+---
+
+### 6. Obtener por ID o Título directo: `GET /contenido/:id`
+
+Este endpoint detecta automáticamente si el parámetro es numérico o un texto:
+
+* **Por ID numérico:**
+  ```bash
+  curl http://localhost:3008/contenido/1
+  ```
+* **Por Título directo:**
+  ```bash
+  curl "http://localhost:3008/contenido/The%20Crown"
+  ```
+
+**Respuesta esperada:** `200 OK`, con el contenido individual en el formato de respuesta.
+
+**ID o Título inexistente:**
 ```bash
 curl http://localhost:3008/contenido/9999
 ```
-
 ```json
-{ "error": "No encontrado" }
+{ "error": "Contenido con ID 9999 no encontrado" }
 ```
-
 Estado: `404 Not Found`.
 
-### 6. Modificar: `PUT /contenido/:id`
+---
+
+### 7. Endpoints directos por ruta (URL Params)
+
+También puedes consultar directamente usando segmentos en la URL:
+
+* **Por Título:**
+  ```bash
+  curl "http://localhost:3008/contenido/titulo/Riverdale"
+  ```
+* **Por Categoría:**
+  ```bash
+  curl "http://localhost:3008/contenido/categoria/Serie"
+  ```
+* **Por Género:**
+  ```bash
+  curl "http://localhost:3008/contenido/genero/Drama"
+  ```
+* **Por Actor / Reparto:**
+  ```bash
+  curl "http://localhost:3008/contenido/actor/Pedro%20Pascal"
+  ```
+
+---
+
+### 8. Modificar: `PUT /contenido/:id`
 
 Para modificar hay que usar el **id real** del registro. Si se usa un texto en lugar del id (por ejemplo `/contenido/nuevo`), la API lo interpreta como un id inexistente y devuelve `404`.
 
@@ -412,13 +483,31 @@ curl -X PUT http://localhost:3008/contenido/1 \
 
 Estado: `404 Not Found`.
 
-### 7. Eliminar: `DELETE /contenido/:id`
+### 9. Eliminar contenido: `DELETE /contenido/:id` o por Título
 
-```bash
-curl -X DELETE http://localhost:3008/contenido/1
+Se puede eliminar tanto por ID numérico como por título:
+
+* **Por ID numérico:**
+  ```bash
+  curl -X DELETE http://localhost:3008/contenido/1
+  ```
+* **Por Título directo:**
+  ```bash
+  curl -X DELETE "http://localhost:3008/contenido/Riverdale"
+  ```
+* **Por ruta específica de título:**
+  ```bash
+  curl -X DELETE "http://localhost:3008/contenido/titulo/Riverdale"
+  ```
+
+**Respuesta esperada:** `200 OK`
+```json
+{
+  "mensaje": "Contenido eliminado correctamente",
+  "id": 1,
+  "titulo": "Riverdale"
+}
 ```
-
-**Respuesta esperada:** `200 OK` (o `204 No Content`, según lo que devuelva el controlador).
 
 ---
 
